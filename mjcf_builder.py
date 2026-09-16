@@ -9,6 +9,10 @@ TANK_LENGTH = 8.066  # forward 방향
 WHEEL_RADIUS = 0.35
 CASTER_RADIUS = 0.15
 
+MAX_SPEED_KMH = 40.0
+MAX_SPEED_MS = MAX_SPEED_KMH / 3.6              # ≈ 11.11 m/s
+MAX_WHEEL_ANGVEL = MAX_SPEED_MS / WHEEL_RADIUS  # ≈ 31.75 rad/s
+
 FLOOR_HALF_SIZE = 150.0  # Unity 300x300 -> half-extent 150
 OBSTACLE_HEIGHT = 2.0    # Unity API에 높이 정보가 없어 기본값으로 고정
 
@@ -62,10 +66,10 @@ def build_tank_mjcf(obstacles=None, num_lidar_rays=9, lidar_fov_deg=140):
 
     xml = f"""
 <mujoco model="tank_challenge_env">
-  <option timestep="0.002" gravity="0 0 -9.81"/>
+  <option timestep="0.0005" gravity="0 0 -9.81" iterations="50" solver="Newton"/>
 
   <default>
-    <geom friction="1.0 0.005 0.0001" contype="1" conaffinity="1"
+    <geom friction="2.0 0.005 0.0001" contype="1" conaffinity="1"
           solref="0.02 1" solimp="0.9 0.95 0.001"/>
   </default>
 
@@ -85,13 +89,13 @@ def build_tank_mjcf(obstacles=None, num_lidar_rays=9, lidar_fov_deg=140):
       <body name="left_wheel" pos="{-(w_half*0.85):.3f} 0 {-h_half:.3f}">
         <joint name="left_wheel_joint" type="hinge" axis="1 0 0" damping="0.3"/>
         <geom type="cylinder" size="{WHEEL_RADIUS} 0.3" euler="0 90 0"
-              rgba="0.1 0.1 0.1 1" mass="150"/>
+              rgba="0.1 0.1 0.1 1" mass="150" friction="2.5 0.005 0.0001"/>
       </body>
 
       <body name="right_wheel" pos="{(w_half*0.85):.3f} 0 {-h_half:.3f}">
         <joint name="right_wheel_joint" type="hinge" axis="1 0 0" damping="0.3"/>
         <geom type="cylinder" size="{WHEEL_RADIUS} 0.3" euler="0 90 0"
-              rgba="0.1 0.1 0.1 1" mass="150"/>
+              rgba="0.1 0.1 0.1 1" mass="150" friction="2.5 0.005 0.0001"/>
       </body>
 
       <body name="caster_front" pos="0 {(l_half*0.9):.3f} {(CASTER_RADIUS - body_z):.3f}">
@@ -115,8 +119,8 @@ def build_tank_mjcf(obstacles=None, num_lidar_rays=9, lidar_fov_deg=140):
   </contact>
 
   <actuator>
-    <motor joint="left_wheel_joint" ctrlrange="-5 5" gear="200"/>
-    <motor joint="right_wheel_joint" ctrlrange="-5 5" gear="200"/>
+    <velocity joint="left_wheel_joint" kv="3000" ctrlrange="-{MAX_WHEEL_ANGVEL:.2f} {MAX_WHEEL_ANGVEL:.2f}"/>
+    <velocity joint="right_wheel_joint" kv="3000" ctrlrange="-{MAX_WHEEL_ANGVEL:.2f} {MAX_WHEEL_ANGVEL:.2f}"/>
   </actuator>
 
   <sensor>

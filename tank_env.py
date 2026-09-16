@@ -3,7 +3,8 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 import mujoco
-from mjcf_builder import build_tank_mjcf, WHEEL_RADIUS
+from mjcf_builder import build_tank_mjcf, WHEEL_RADIUS, MAX_WHEEL_ANGVEL
+
 
 class TankEnv(gym.Env):
     def __init__(self, obstacles=None, num_lidar_rays=9, max_episode_steps=2000):
@@ -69,8 +70,8 @@ class TankEnv(gym.Env):
 
     def step(self, action):
         v, w = float(action[0]), float(action[1])
-        left = np.clip(v - w, -1, 1) * 3.0
-        right = np.clip(v + w, -1, 1) * 3.0
+        left = np.clip(v - w, -1, 1) * MAX_WHEEL_ANGVEL
+        right = np.clip(v + w, -1, 1) * MAX_WHEEL_ANGVEL
         self.data.ctrl[0] = left
         self.data.ctrl[1] = right
 
