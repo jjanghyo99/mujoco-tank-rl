@@ -102,10 +102,6 @@ def build_tank_mjcf(obstacles=None, num_lidar_rays=9, lidar_fov_deg=140):
         <geom type="sphere" size="{CASTER_RADIUS}" rgba="0.3 0.3 0.3 1"
               mass="20" friction="0.05 0.005 0.0001"/>
       </body>
-      <body name="caster_rear" pos="0 {-(l_half*0.9):.3f} {(CASTER_RADIUS - body_z):.3f}">
-        <geom type="sphere" size="{CASTER_RADIUS}" rgba="0.3 0.3 0.3 1"
-              mass="20" friction="0.05 0.005 0.0001"/>
-      </body>
     </body>
 
     {obstacles_xml}
@@ -115,7 +111,6 @@ def build_tank_mjcf(obstacles=None, num_lidar_rays=9, lidar_fov_deg=140):
     <exclude body1="tank_body" body2="left_wheel"/>
     <exclude body1="tank_body" body2="right_wheel"/>
     <exclude body1="tank_body" body2="caster_front"/>
-    <exclude body1="tank_body" body2="caster_rear"/>
   </contact>
 
   <actuator>
