@@ -1,3 +1,5 @@
+# SAC로 실제 학습을 돌리는 스크립트
+
 # train.py
 from tank_env import TankEnv
 
@@ -13,15 +15,7 @@ import time
 
 
 
-# 장애물 2개를 딕셔너리 리스트로 정의
-obstacles = [
-    {"x_min": 20, "x_max": 25, "z_min": 20, "z_max": 25},
-    {"x_min": -10, "x_max": -5, "z_min": 30, "z_max": 35},
-]
-
-# 방금 정의한 장애물 배치로 탱크 환경을 하나 생성
-# 이 시점에 내부적으로 MJCF XML이 만들어지고 MuJoCo 모델이 로드됨
-env = TankEnv(obstacles=obstacles)
+env = TankEnv()  
 
 # 방금 만든 환경을 Monitor로 한 번 감싸서, 
 # 앞으로 이 환경에서 일어나는 모든 에피소드의 통계가 자동으로 기록되게 합니다. 

@@ -1,3 +1,5 @@
+# Gymnasium 환경 본체. SAC가 실제로 학습에 쓰는 핵심 파일
+
 # tank_env.py
 import numpy as np
 import gymnasium as gym
@@ -7,26 +9,21 @@ from mjcf_builder import build_tank_mjcf, WHEEL_RADIUS, MAX_WHEEL_ANGVEL
 
 
 class TankEnv(gym.Env):
-    def __init__(self, obstacles=None, num_lidar_rays=9, max_episode_steps=2000):
+    def __init__(self, num_lidar_rays=9, max_episode_steps=2000):
         super().__init__()
-        self.obstacles = obstacles or []
         self.num_lidar_rays = num_lidar_rays
         self.max_episode_steps = max_episode_steps
         self.lidar_max_dist = 30.0
 
-        xml = build_tank_mjcf(self.obstacles, num_lidar_rays)
-        self.model = mujoco.MjModel.from_xml_string(xml)
-        self.data = mujoco.MjData(self.model)
-
-        # 액션: [v(전진/후진), w(회전)] 둘 다 -1~1 (실제 API의 weight 개념과 대응)
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
-
-        # 관측: 라이다 N개(정규화 거리) + [속도, 목표까지 거리, 목표방향 상대각(sin,cos)]
         obs_dim = num_lidar_rays + 4
         self.observation_space = spaces.Box(low=-1.0, high=1.0, shape=(obs_dim,), dtype=np.float32)
 
-        self.target_pos = np.array([50.0, 50.0])  # MuJoCo (x, y) 기준, 나중에 reset에서 랜덤화 가능
+        self.model = None
+        self.data = None
+        self.target_pos = np.array([0.0, 0.0])
         self._step_count = 0
+        # 실제 모델 생성은 reset()에서 처음 호출됨
 
     def _get_lidar(self):
         raw = self.data.sensordata[:self.num_lidar_rays].copy()
@@ -61,8 +58,17 @@ class TankEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        mujoco.mj_resetData(self.model, self.data)
-        self.data.qpos[2] = self.model.body("tank_body").pos[2]  # 초기 높이 유지
+
+        obstacles = self._generate_random_obstacles(n=self.np_random.integers(3, 8))
+        xml = build_tank_mjcf(obstacles, self.num_lidar_rays)
+        self.model = mujoco.MjModel.from_xml_string(xml)
+        self.data = mujoco.MjData(self.model)
+
+        self.target_pos = np.array([
+            self.np_random.uniform(-50, 50),
+            self.np_random.uniform(-50, 50),
+        ])
+
         mujoco.mj_forward(self.model, self.data)
         self._step_count = 0
         obs, _ = self._get_obs()
@@ -104,3 +110,15 @@ class TankEnv(gym.Env):
             if "tank_body" in names and any("obstacle" in n for n in names):
                 return True
         return False
+
+    def _generate_random_obstacles(self, n=5):
+        obstacles = []
+        for _ in range(n):
+            cx = self.np_random.uniform(-40, 40)
+            cy = self.np_random.uniform(-40, 40)
+            half = self.np_random.uniform(1.5, 4.0)
+            obstacles.append({
+                "x_min": cx - half, "x_max": cx + half,
+                "z_min": cy - half, "z_max": cy + half,
+            })
+        return obstacles

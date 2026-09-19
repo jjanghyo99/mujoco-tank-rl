@@ -1,3 +1,5 @@
+# 탱크+장애물+라이다를 MJCF(XML)로 찍어내는 "설계도 공장"
+
 # mjcf_builder.py
 import numpy as np
 

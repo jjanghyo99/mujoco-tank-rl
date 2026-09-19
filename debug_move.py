@@ -1,11 +1,11 @@
+# 뷰어를 띄워서 물리적으로 잘 움직이는지 눈으로/로그로 확인하는 디버깅 도구
+
 # debug_move.py
 from tank_env import TankEnv
 import mujoco.viewer
 import time
 
-env = TankEnv(obstacles=[
-    {"x_min": 20, "x_max": 25, "z_min": 20, "z_max": 25},
-])
+env = TankEnv()
 obs, _ = env.reset()
 
 with mujoco.viewer.launch_passive(env.model, env.data) as viewer:

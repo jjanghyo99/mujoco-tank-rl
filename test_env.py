@@ -1,12 +1,8 @@
-# test_env.py
+# 환경이 에러 없이 reset/step 반복하는지 짧게 확인하는 스모크 테스트
+
 from tank_env import TankEnv
 
-obstacles = [
-    {"x_min": 20, "x_max": 25, "z_min": 20, "z_max": 25},
-    {"x_min": -10, "x_max": -5, "z_min": 30, "z_max": 35},
-]
-
-env = TankEnv(obstacles=obstacles)
+env = TankEnv()  # obstacles 인자 삭제. 이제 reset()이 알아서 랜덤 생성
 obs, _ = env.reset()
 print("초기 관측값 shape:", obs.shape)
 
