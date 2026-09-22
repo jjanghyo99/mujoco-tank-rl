@@ -64,7 +64,6 @@ class TankEnv(gym.Env):
             self.np_random.uniform(-30, 30),
         ])
 
-        # 목표는 시작점에서 최소 25m 이상 떨어지도록 재시도
         for _ in range(20):
             target = np.array([
                 self.np_random.uniform(-50, 50),
@@ -73,11 +72,9 @@ class TankEnv(gym.Env):
             if np.linalg.norm(target - start) >= 25.0:
                 break
 
-        obstacles = self._generate_obstacles_on_path(
-            start=start, target=target, n=self.np_random.integers(4, 8)
-        )
-        self.last_obstacles = obstacles  # 디버깅용으로 저장
-        
+        obstacles = self._generate_grid_obstacles(start=start, target=target)  # <- 함수명만 교체
+        self.last_obstacles = obstacles  # 디버깅용 저장 (이미 추가되어 있으면 그대로 유지)
+
         xml = build_tank_mjcf(obstacles, self.num_lidar_rays, start_pos=tuple(start))
         self.model = mujoco.MjModel.from_xml_string(xml)
         self.data = mujoco.MjData(self.model)
@@ -126,25 +123,29 @@ class TankEnv(gym.Env):
                 return True
         return False
 
-    def _generate_obstacles_on_path(self, start, target, n=6):
+    def _generate_grid_obstacles(self, start, target, spacing=25.0, jitter=5.0,
+                                safe_radius=8.0, fill_prob=0.35):
+        """맵 전체를 격자로 나누고, 각 셀마다 확률적으로 장애물 하나씩 배치.
+        시작점/목표점 주변은 안전하게 비워둠."""
         obstacles = []
-        start = np.array(start)
-        target = np.array(target)
-        total_dist = np.linalg.norm(target - start)
+        grid_range = np.arange(-70, 70 + 1, spacing)
 
-        for _ in range(n):
-            t = self.np_random.uniform(0.2, 0.8)
-            base = start + (target - start) * t
-            offset = self.np_random.uniform(-2.5, 2.5, size=2)  # 폭을 4->2.5로 축소
-            cx, cy = base[0] + offset[0], base[1] + offset[1]
+        for gx in grid_range:
+            for gy in grid_range:
+                if self.np_random.random() > fill_prob:
+                    continue
 
-            # 탱크 대각선(~4.6m) 여유를 감안해 최소 8m로 상향
-            if np.linalg.norm([cx - start[0], cy - start[1]]) < 8.0:
-                continue
+                offset = self.np_random.uniform(-jitter, jitter, size=2)
+                cx, cy = gx + offset[0], gy + offset[1]
 
-            half = self.np_random.uniform(1.5, 3.0)
-            obstacles.append({
-                "x_min": cx - half, "x_max": cx + half,
-                "z_min": cy - half, "z_max": cy + half,
-            })
+                if np.linalg.norm([cx - start[0], cy - start[1]]) < safe_radius:
+                    continue
+                if np.linalg.norm([cx - target[0], cy - target[1]]) < safe_radius:
+                    continue
+
+                half = self.np_random.uniform(1.5, 3.0)
+                obstacles.append({
+                    "x_min": cx - half, "x_max": cx + half,
+                    "z_min": cy - half, "z_max": cy + half,
+                })
         return obstacles
