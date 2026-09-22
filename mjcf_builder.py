@@ -56,7 +56,7 @@ def build_obstacles_xml(obstacles):
         )
     return "\n    ".join(bodies)
 
-def build_tank_mjcf(obstacles=None, num_lidar_rays=9, lidar_fov_deg=140):
+def build_tank_mjcf(obstacles=None, num_lidar_rays=9, lidar_fov_deg=140, start_pos=(0.0, 0.0)):
     obstacles = obstacles or []
     body_z = _tank_body_z()
     w_half = TANK_WIDTH / 2
@@ -70,17 +70,21 @@ def build_tank_mjcf(obstacles=None, num_lidar_rays=9, lidar_fov_deg=140):
 <mujoco model="tank_challenge_env">
   <option timestep="0.0005" gravity="0 0 -9.81" iterations="50" solver="Newton"/>
 
+  <visual>
+    <headlight ambient="0.4 0.4 0.4" diffuse="0.4 0.4 0.4"/>
+  </visual>
+
   <default>
     <geom friction="2.0 0.005 0.0001" contype="1" conaffinity="1"
           solref="0.02 1" solimp="0.9 0.95 0.001"/>
   </default>
 
   <worldbody>
-    <light diffuse="0.8 0.8 0.8" pos="0 0 20" dir="0 0 -1"/>
+    <light directional="true" diffuse="0.7 0.7 0.7" pos="0 0 50" dir="0 0 -1"/>
     <geom name="floor" type="plane" size="{FLOOR_HALF_SIZE} {FLOOR_HALF_SIZE} 0.1"
           rgba="0.8 0.8 0.8 1"/>
 
-    <body name="tank_body" pos="0 0 {body_z:.3f}">
+    <body name="tank_body" pos="{start_pos[0]:.3f} {start_pos[1]:.3f} {body_z:.3f}">
       <freejoint/>
       <geom name="tank_geom" type="box"
             size="{w_half:.3f} {l_half:.3f} {h_half:.3f}"
