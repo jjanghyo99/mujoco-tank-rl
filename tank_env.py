@@ -116,19 +116,17 @@ class TankEnv(gym.Env):
     def _check_collision(self):
         for i in range(self.data.ncon):
             con = self.data.contact[i]
-            b1 = self.model.geom(con.geom1).bodyid
-            b2 = self.model.geom(con.geom2).bodyid
+            b1 = int(self.model.geom(con.geom1).bodyid[0])
+            b2 = int(self.model.geom(con.geom2).bodyid[0])
             names = {self.model.body(b1).name, self.model.body(b2).name}
             if "tank_body" in names and any("obstacle" in n for n in names):
                 return True
         return False
 
-    def _generate_grid_obstacles(self, start, target, spacing=25.0, jitter=5.0,
-                                safe_radius=8.0, fill_prob=0.35):
-        """맵 전체를 격자로 나누고, 각 셀마다 확률적으로 장애물 하나씩 배치.
-        시작점/목표점 주변은 안전하게 비워둠."""
+    def _generate_grid_obstacles(self, start, target, spacing=15.0, jitter=30.0,
+                                safe_radius=10.0, fill_prob=0.50, wall_prob=0.3):
         obstacles = []
-        grid_range = np.arange(-70, 70 + 1, spacing)
+        grid_range = np.arange(-140, 140 + 1, spacing)
 
         for gx in grid_range:
             for gy in grid_range:
@@ -143,9 +141,21 @@ class TankEnv(gym.Env):
                 if np.linalg.norm([cx - target[0], cy - target[1]]) < safe_radius:
                     continue
 
-                half = self.np_random.uniform(1.5, 3.0)
+                if self.np_random.random() < wall_prob:
+                    # 벽 형태: 한쪽은 길게, 한쪽은 얇게
+                    is_horizontal = self.np_random.random() < 0.5
+                    length_half = self.np_random.uniform(5.0, 12.0)   # 벽의 긴 방향
+                    thickness_half = self.np_random.uniform(0.5, 1.2)  # 벽의 두께
+                    if is_horizontal:
+                        x_half, y_half = length_half, thickness_half
+                    else:
+                        x_half, y_half = thickness_half, length_half
+                else:
+                    # 기존처럼 정사각형(나무/바위 느낌)
+                    x_half = y_half = self.np_random.uniform(1.5, 3.0)
+
                 obstacles.append({
-                    "x_min": cx - half, "x_max": cx + half,
-                    "z_min": cy - half, "z_max": cy + half,
+                    "x_min": cx - x_half, "x_max": cx + x_half,
+                    "z_min": cy - y_half, "z_max": cy + y_half,
                 })
         return obstacles
