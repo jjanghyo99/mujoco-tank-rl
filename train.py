@@ -1,7 +1,7 @@
 # SAC로 실제 학습을 돌리는 스크립트
 
 # train.py
-from tank_env import TankEnv
+from env.tank_env import TankEnv
 
 # SAC 알고리즘이 이미 구현되어 있는 라이브러리
 from stable_baselines3 import SAC
@@ -10,8 +10,16 @@ from stable_baselines3 import SAC
 # 에피소드 총 보상이 얼마였는지 자동으로 기록해주는 감시용 래퍼
 from stable_baselines3.common.monitor import Monitor
 
+# 가장 좋았던 시점의 데이터 저장
+from stable_baselines3.common.callbacks import CheckpointCallback
+
+
 # 시간 기록용
 import time
+
+# 경로 저장용
+import os
+os.makedirs("models", exist_ok=True)
 
 
 
@@ -43,11 +51,17 @@ model = SAC(
 # 학습 시작
 start = time.time()   
 
+checkpoint_callback = CheckpointCallback(
+    save_freq=20_000,             # 2만 스텝마다
+    save_path="./models/checkpoints/",
+    name_prefix="tank_sac"
+)
+
 # 환경에서 행동 -> 보상 -> 신경망 업데이트하는 과정을 총 20만번(스텝) 반복하라는 뜻
-model.learn(total_timesteps=300_000)
+model.learn(total_timesteps=300_000, callback=checkpoint_callback)
 print(f"소요 시간: {time.time() - start:.1f}초")
 
-model.save("tank_sac_v2")
+model.save("models/tank_sac_v4")
 
 # import datetime
 # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

@@ -1,14 +1,14 @@
 # 학습된 모델 눈으로 확인하기
 
 # watch_policy.py (수정본)
-from tank_env import TankEnv
+from env.tank_env import TankEnv
 from stable_baselines3 import SAC
 import mujoco.viewer
 import numpy as np
 import time
 
 env = TankEnv(max_episode_steps=8000)
-model = SAC.load("tank_sac_v1")
+model = SAC.load("models/tank_sac_v3")
 
 def watch_one_episode():
     obs, _ = env.reset()

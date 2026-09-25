@@ -1,7 +1,7 @@
 # 뷰어를 띄워서 물리적으로 잘 움직이는지 눈으로/로그로 확인하는 디버깅 도구
 
 # debug_move.py
-from tank_env import TankEnv
+from env.tank_env import TankEnv
 import mujoco.viewer
 import time
 

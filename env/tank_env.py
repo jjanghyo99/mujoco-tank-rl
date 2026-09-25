@@ -5,7 +5,7 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 import mujoco
-from mjcf_builder import build_tank_mjcf, WHEEL_RADIUS, MAX_WHEEL_ANGVEL
+from env.mjcf_builder import build_tank_mjcf, WHEEL_RADIUS, MAX_WHEEL_ANGVEL
 
 
 class TankEnv(gym.Env):

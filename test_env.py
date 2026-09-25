@@ -1,6 +1,6 @@
 # 환경이 에러 없이 reset/step 반복하는지 짧게 확인하는 스모크 테스트
 
-from tank_env import TankEnv
+from env.tank_env import TankEnv
 
 env = TankEnv()  # obstacles 인자 삭제. 이제 reset()이 알아서 랜덤 생성
 obs, _ = env.reset()
