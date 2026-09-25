@@ -93,7 +93,7 @@ class TankEnv(gym.Env):
         self.data.ctrl[0] = left
         self.data.ctrl[1] = right
 
-        for _ in range(5):  # substep으로 제어 주기 조정
+        for _ in range(5):
             mujoco.mj_step(self.model, self.data)
 
         obs, dist = self._get_obs()
@@ -102,9 +102,16 @@ class TankEnv(gym.Env):
         collided = self._check_collision()
         reached = dist < 3.0
 
-        reward = -0.01 * dist  # 목표에 가까울수록 덜 감점
+        reward = -0.01 * dist
+
+        # 근접 페널티: 가장 가까운 장애물이 3m 이내로 들어오면 매 스텝 추가 감점
+        lidar_norm = self._get_lidar()  # 0~1 정규화된 값 (1이 가장 멀리/미감지)
+        min_dist_m = np.min(lidar_norm) * self.lidar_max_dist
+        if min_dist_m < 3.0:
+            reward -= (3.0 - min_dist_m) * 2.0  # 가까울수록 더 크게 감점
+
         if collided:
-            reward -= 20.0
+            reward -= 60.0   # 20 -> 60으로 상향
         if reached:
             reward += 50.0
 
@@ -112,7 +119,7 @@ class TankEnv(gym.Env):
         truncated = self._step_count >= self.max_episode_steps
 
         return obs, reward, terminated, truncated, {"distance": dist}
-
+    
     def _check_collision(self):
         for i in range(self.data.ncon):
             con = self.data.contact[i]
