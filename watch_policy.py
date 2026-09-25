@@ -17,6 +17,7 @@ def watch_one_episode():
     step = 0
 
     with mujoco.viewer.launch_passive(env.model, env.data) as viewer:
+        viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_RANGEFINDER] = True
         viewer.cam.lookat[:] = [0, 0, 0]
         viewer.cam.distance = 100
         viewer.cam.azimuth = 90

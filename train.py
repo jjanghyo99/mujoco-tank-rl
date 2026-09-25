@@ -44,7 +44,11 @@ model = SAC(
 start = time.time()   
 
 # 환경에서 행동 -> 보상 -> 신경망 업데이트하는 과정을 총 20만번(스텝) 반복하라는 뜻
-model.learn(total_timesteps=200_000)
+model.learn(total_timesteps=300_000)
 print(f"소요 시간: {time.time() - start:.1f}초")
 
-model.save("tank_sac_v1")
+model.save("tank_sac_v2")
+
+# import datetime
+# timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+# model.save(f"tank_sac_{timestamp}")
