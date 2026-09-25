@@ -107,8 +107,8 @@ class TankEnv(gym.Env):
         # 근접 페널티: 가장 가까운 장애물이 3m 이내로 들어오면 매 스텝 추가 감점
         lidar_norm = self._get_lidar()  # 0~1 정규화된 값 (1이 가장 멀리/미감지)
         min_dist_m = np.min(lidar_norm) * self.lidar_max_dist
-        if min_dist_m < 3.0:
-            reward -= (3.0 - min_dist_m) * 2.0  # 가까울수록 더 크게 감점
+        if min_dist_m < 2.0:  # 3.0 -> 2.0 (진짜 임박했을 때만)
+            reward -= (2.0 - min_dist_m) * 0.3  # 2.0 -> 0.3 (최대 -0.6, 대폭 축소)
 
         if collided:
             reward -= 60.0   # 20 -> 60으로 상향
