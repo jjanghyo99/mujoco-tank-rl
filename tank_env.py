@@ -9,7 +9,7 @@ from mjcf_builder import build_tank_mjcf, WHEEL_RADIUS, MAX_WHEEL_ANGVEL
 
 
 class TankEnv(gym.Env):
-    def __init__(self, num_lidar_rays=9, max_episode_steps=2000):
+    def __init__(self, num_lidar_rays=9, max_episode_steps=8000):
         super().__init__()
         self.num_lidar_rays = num_lidar_rays
         self.max_episode_steps = max_episode_steps
