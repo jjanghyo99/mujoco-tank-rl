@@ -31,9 +31,11 @@ def build_lidar_sites(num_rays=9, fov_deg=140):
     for i, ang in enumerate(angles):
         # rangefinder는 site의 "로컬 z축" 방향으로 광선을 쏨.
         # euler="0 0 ang"(z축 기준 회전)은 z축 자체의 방향은 안 바꾸므로 광선이 계속 수직 위를 향하는 버그가 있었음(v2~v8).
-        # zaxis로 광선 방향을 직접 지정: forward(+y)를 0도 기준으로 수평면에서 부채꼴로 회전
+        # zaxis로 광선 방향을 직접 지정. 주의: 이 탱크는 굴림 방향 때문에 v=+1(전진)일 때 실제로는
+        # 로컬 -y 방향으로 움직임(휠 각속도 부호와 롤링 방향 관계상). 그래서 0도(정면) 기준을 -y로 잡음
+        # (+y로 잡으면 광선이 실제 진행 방향과 정반대인 뒤를 보게 됨 - 실측으로 확인/수정함)
         rad = np.radians(ang)
-        zx, zy, zz = np.sin(rad), np.cos(rad), 0.0
+        zx, zy, zz = -np.sin(rad), -np.cos(rad), 0.0
         sites_xml.append(
             f'<site name="lidar_{i}" pos="0 0 0" '
             f'zaxis="{zx:.4f} {zy:.4f} {zz:.4f}" size="0.01"/>'
