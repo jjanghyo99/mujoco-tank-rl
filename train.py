@@ -38,6 +38,7 @@ model = SAC(
     env,
     verbose=1,
     tensorboard_log="./tank_tensorboard/",
+    target_entropy=-1.0,  # 기본값(-action_dim = -2)보다 덜 공격적으로 낮춤 -> 탐험을 더 오래 유지
 )
 
 # "MlpPolicy": 정책 신경망의 구조를 "일반적인 다층 퍼셉트론(MLP)"으로 하겠다는 뜻이에요. 
@@ -61,7 +62,7 @@ checkpoint_callback = CheckpointCallback(
 model.learn(total_timesteps=300_000, callback=checkpoint_callback)
 print(f"소요 시간: {time.time() - start:.1f}초")
 
-model.save("models/tank_sac_v4")
+model.save("models/tank_sac_v5")
 
 # import datetime
 # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
