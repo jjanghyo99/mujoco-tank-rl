@@ -110,7 +110,7 @@ class TankEnv(gym.Env):
         progress_reward = (prev_dist - dist) * 2.0   # 계수는 도달 보상과 스케일 맞춰 조정
         self._prev_dist = dist
 
-        reward = progress_reward - 0.001 * dist   # 정적 거리 페널티는 아주 약하게만 유지
+        reward = progress_reward - 0.001 * dist - 0.03   # time penalty: 느리게 가는 전략에 안주하지 않도록 고정 항 추가
 
         # 2. 근접 페널티 (v4에서 검증된 완화 버전 유지)
         lidar_norm = self._get_lidar()
