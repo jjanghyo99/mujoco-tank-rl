@@ -29,10 +29,14 @@ def build_lidar_sites(num_rays=9, fov_deg=140):
     angles = np.linspace(-fov_deg / 2, fov_deg / 2, num_rays)
     sites_xml, sensors_xml = [], []
     for i, ang in enumerate(angles):
-        # forward = local y축이므로, y축 기준 회전 없이 z축(수직) 회전으로 방향만 바꿈
+        # rangefinder는 site의 "로컬 z축" 방향으로 광선을 쏨.
+        # euler="0 0 ang"(z축 기준 회전)은 z축 자체의 방향은 안 바꾸므로 광선이 계속 수직 위를 향하는 버그가 있었음(v2~v8).
+        # zaxis로 광선 방향을 직접 지정: forward(+y)를 0도 기준으로 수평면에서 부채꼴로 회전
+        rad = np.radians(ang)
+        zx, zy, zz = np.sin(rad), np.cos(rad), 0.0
         sites_xml.append(
             f'<site name="lidar_{i}" pos="0 0 0" '
-            f'euler="0 0 {ang:.2f}" size="0.01"/>'
+            f'zaxis="{zx:.4f} {zy:.4f} {zz:.4f}" size="0.01"/>'
         )
         sensors_xml.append(
             f'<rangefinder name="lidar_sensor_{i}" site="lidar_{i}"/>'
