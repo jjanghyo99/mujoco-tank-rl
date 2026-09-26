@@ -112,15 +112,19 @@ class TankEnv(gym.Env):
 
         reward = progress_reward - 0.001 * dist - 0.03   # time penalty: 느리게 가는 전략에 안주하지 않도록 고정 항 추가
 
-        # 2. 근접 페널티 (v4에서 검증된 완화 버전 유지)
+        # 2. 근접 페널티: 속도에 비례해 안전거리/강도를 크게 키움 (v8, 속도-안전 트레이드오프를 확실히 테스트하기 위해 강하게 적용)
+        # speed=0이면 margin=2.0, 계수는 그대로라 v6/v7과 동일 -> 저속 구간 행동은 안 건드리고 고속 구간만 세게 조임
+        speed = np.linalg.norm(self.data.qvel[0:2])
         lidar_norm = self._get_lidar()
         min_dist_m = np.min(lidar_norm) * self.lidar_max_dist
-        if min_dist_m < 2.0:
-            reward -= (2.0 - min_dist_m) * 0.3
+        safety_margin = 2.0 + 0.6 * speed   # 최고속도(~11.1m/s)에서 margin ≈ 8.7m
+        if min_dist_m < safety_margin:
+            reward -= (safety_margin - min_dist_m) * 1.0
 
-        # 3. 충돌/도달 (기존 유지, 충돌은 v3~v5에서 검증된 -60 유지)
+        # 3. 충돌/도달: 충돌 페널티에 충돌 순간 속도를 강하게 반영 (v8)
+        # speed=0이면 -60으로 기존과 동일, 최고속도로 충돌하면 -60-8*11.1 ≈ -148.8 (약 2.5배)
         if collided:
-            reward -= 60.0
+            reward -= 60.0 + 8.0 * speed
         if reached:
             reward += 50.0
 
