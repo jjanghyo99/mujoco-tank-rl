@@ -62,7 +62,7 @@ checkpoint_callback = CheckpointCallback(
 model.learn(total_timesteps=300_000, callback=checkpoint_callback)
 print(f"소요 시간: {time.time() - start:.1f}초")
 
-model.save("models/tank_sac_v5")
+model.save("models/tank_sac_v6")
 
 # import datetime
 # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

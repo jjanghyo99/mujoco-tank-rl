@@ -8,7 +8,7 @@ import numpy as np
 import time
 
 env = TankEnv(max_episode_steps=8000)
-model = SAC.load("models/tank_sac_v3")
+model = SAC.load("models/tank_sac_v6")
 
 def watch_one_episode():
     obs, _ = env.reset()

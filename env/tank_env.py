@@ -81,6 +81,9 @@ class TankEnv(gym.Env):
 
         self.target_pos = target
 
+        if hasattr(self, '_prev_dist'):
+            del self._prev_dist  # 새 에피소드 시작 시 초기화 (안 하면 이전 에피소드 거리와 비교하는 버그 발생)
+
         mujoco.mj_forward(self.model, self.data)
         self._step_count = 0
         obs, _ = self._get_obs()
@@ -102,16 +105,22 @@ class TankEnv(gym.Env):
         collided = self._check_collision()
         reached = dist < 3.0
 
-        reward = -0.01 * dist
+        # 1. Progress reward: 실제로 가까워진 만큼만 보상 (핵심 변경)
+        prev_dist = self._prev_dist if hasattr(self, '_prev_dist') else dist
+        progress_reward = (prev_dist - dist) * 2.0   # 계수는 도달 보상과 스케일 맞춰 조정
+        self._prev_dist = dist
 
-        # 근접 페널티: 가장 가까운 장애물이 3m 이내로 들어오면 매 스텝 추가 감점
-        lidar_norm = self._get_lidar()  # 0~1 정규화된 값 (1이 가장 멀리/미감지)
+        reward = progress_reward - 0.001 * dist   # 정적 거리 페널티는 아주 약하게만 유지
+
+        # 2. 근접 페널티 (v4에서 검증된 완화 버전 유지)
+        lidar_norm = self._get_lidar()
         min_dist_m = np.min(lidar_norm) * self.lidar_max_dist
-        if min_dist_m < 2.0:  # 3.0 -> 2.0 (진짜 임박했을 때만)
-            reward -= (2.0 - min_dist_m) * 0.3  # 2.0 -> 0.3 (최대 -0.6, 대폭 축소)
+        if min_dist_m < 2.0:
+            reward -= (2.0 - min_dist_m) * 0.3
 
+        # 3. 충돌/도달 (기존 유지, 충돌은 v3~v5에서 검증된 -60 유지)
         if collided:
-            reward -= 60.0   # 20 -> 60으로 상향
+            reward -= 60.0
         if reached:
             reward += 50.0
 
@@ -119,7 +128,7 @@ class TankEnv(gym.Env):
         truncated = self._step_count >= self.max_episode_steps
 
         return obs, reward, terminated, truncated, {"distance": dist}
-    
+        
     def _check_collision(self):
         for i in range(self.data.ncon):
             con = self.data.contact[i]
