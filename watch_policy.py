@@ -7,7 +7,7 @@ import mujoco.viewer
 import numpy as np
 import time
 
-env = TankEnv(max_episode_steps=8000)
+env = TankEnv(max_episode_steps=16000)
 model = SAC.load("models/tank_sac_v6")
 
 def watch_one_episode():

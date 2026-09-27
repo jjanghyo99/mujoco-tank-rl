@@ -9,7 +9,7 @@ from env.mjcf_builder import build_tank_mjcf, WHEEL_RADIUS, MAX_WHEEL_ANGVEL
 
 
 class TankEnv(gym.Env):
-    def __init__(self, num_lidar_rays=9, max_episode_steps=8000):
+    def __init__(self, num_lidar_rays=9, max_episode_steps=16000):
         super().__init__()
         self.num_lidar_rays = num_lidar_rays
         self.max_episode_steps = max_episode_steps
@@ -110,7 +110,7 @@ class TankEnv(gym.Env):
         progress_reward = (prev_dist - dist) * 2.0   # 계수는 도달 보상과 스케일 맞춰 조정
         self._prev_dist = dist
 
-        reward = progress_reward - 0.001 * dist - 0.03   # time penalty: 느리게 가는 전략에 안주하지 않도록 고정 항 추가
+        reward = progress_reward - 0.001 * dist - 0.003   # time penalty: v11에서 0.03->0.003 (에피소드 길이 2배 늘린 만큼 누적 상한도 같이 낮춰서 "충돌이 시간초과보다 유리한" 역유인 방지)
 
         # 2. 근접 페널티: 속도-안전 연동 (v9_2 = v10에서 완화했던 걸 v9 강도로 원복, 그 상태로 이어서 학습)
         # v10으로 완화(0.6->0.3, 1.0->0.3)했더니 도달 성공이 오히려 사라져서, v9의 강한 세팅이 맞는 방향일 가능성 -> 원복
@@ -143,8 +143,10 @@ class TankEnv(gym.Env):
                 return True
         return False
 
-    def _generate_grid_obstacles(self, start, target, spacing=15.0, jitter=30.0,
-                                safe_radius=10.0, fill_prob=0.50, wall_prob=0.3):
+    def _generate_grid_obstacles(self, start, target, spacing=15.0, jitter=12.0,
+                                safe_radius=10.0, fill_prob=0.15, wall_prob=0.3):
+        # v11: 난이도를 낮추기 위해 밀도(fill_prob 0.50->0.15, 에피소드당 약 180개->54개)를 크게 낮추고,
+        # jitter도 spacing(15)보다 작게(30->12) 줄여서 장애물끼리 겹쳐 통과 불가능한 좁은 틈이 생기는 걸 줄임
         obstacles = []
         grid_range = np.arange(-140, 140 + 1, spacing)
 
