@@ -112,20 +112,19 @@ class TankEnv(gym.Env):
 
         reward = progress_reward - 0.001 * dist - 0.03   # time penalty: 느리게 가는 전략에 안주하지 않도록 고정 항 추가
 
-        # 2. 근접 페널티: 속도-안전 연동 (v10, v8/v9는 라이다가 고장난 상태에서 세게 잡은 값이라 완화)
-        # speed=0이면 margin=2.0, 계수 0.3으로 v6와 완전히 동일 -> 라이다가 이제 실제로 작동하니
-        # v8/v9의 절반 강도(0.6->0.3, 1.0->0.3)로 낮춰서 과도한 저속 안주를 줄임
+        # 2. 근접 페널티: 속도-안전 연동 (v9_2 = v10에서 완화했던 걸 v9 강도로 원복, 그 상태로 이어서 학습)
+        # v10으로 완화(0.6->0.3, 1.0->0.3)했더니 도달 성공이 오히려 사라져서, v9의 강한 세팅이 맞는 방향일 가능성 -> 원복
         speed = np.linalg.norm(self.data.qvel[0:2])
         lidar_norm = self._get_lidar()
         min_dist_m = np.min(lidar_norm) * self.lidar_max_dist
-        safety_margin = 2.0 + 0.3 * speed   # 최고속도(~11.1m/s)에서 margin ≈ 5.3m (v8/v9: 8.7m)
+        safety_margin = 2.0 + 0.6 * speed   # 최고속도(~11.1m/s)에서 margin ≈ 8.7m
         if min_dist_m < safety_margin:
-            reward -= (safety_margin - min_dist_m) * 0.3   # v8/v9: 1.0
+            reward -= (safety_margin - min_dist_m) * 1.0
 
-        # 3. 충돌/도달: 충돌 페널티의 속도 가중치도 절반으로 완화 (v10)
-        # speed=0이면 -60으로 기존과 동일, 최고속도 충돌 시 -60-4*11.1 ≈ -104.4 (v8/v9: -148.8)
+        # 3. 충돌/도달: 충돌 페널티도 v9 강도로 원복
+        # speed=0이면 -60으로 기존과 동일, 최고속도 충돌 시 -60-8*11.1 ≈ -148.8
         if collided:
-            reward -= 60.0 + 4.0 * speed
+            reward -= 60.0 + 8.0 * speed
         if reached:
             reward += 50.0
 
