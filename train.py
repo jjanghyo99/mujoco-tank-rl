@@ -30,7 +30,7 @@ import torch
 
 # 학습이 끝나면 저장할 이름. 이거 하나만 바꾸면 체크포인트/최종 저장 경로가 다 같이 바뀜
 # (예전에 옛날 버전 이름으로 저장돼버린 실수를 막기 위함)
-MODEL_NAME = "tank_sac_v8"
+MODEL_NAME = "tank_sac_v9"
 
 
 def make_env():
