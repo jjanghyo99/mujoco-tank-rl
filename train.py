@@ -30,7 +30,7 @@ import torch
 
 # 학습이 끝나면 저장할 이름. 이거 하나만 바꾸면 체크포인트/최종 저장 경로가 다 같이 바뀜
 # (예전에 옛날 버전 이름으로 저장돼버린 실수를 막기 위함)
-MODEL_NAME = "tank_sac_v14"
+MODEL_NAME = "tank_sac_v15"
 
 
 def make_env():
@@ -109,8 +109,8 @@ if __name__ == "__main__":
         name_prefix=MODEL_NAME,
     )
 
-    # 환경에서 행동 -> 보상 -> 신경망 업데이트하는 과정을 총 30만번(스텝) 반복하라는 뜻
-    model.learn(total_timesteps=300_000, callback=checkpoint_callback)
+    # 환경에서 행동 -> 보상 -> 신경망 업데이트하는 과정을 총 120만번(스텝) 반복하라는 뜻
+    model.learn(total_timesteps=1_200_000, callback=checkpoint_callback)
     print(f"소요 시간: {time.time() - start:.1f}초")
 
     model.save(f"models/{MODEL_NAME}")
