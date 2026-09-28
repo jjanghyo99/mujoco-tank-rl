@@ -10,9 +10,9 @@ import os
 import torch
 
 # 이어서 학습할 모델과, 다 끝나고 저장할 이름
-LOAD_FROM = "models/tank_sac_v9"
-SAVE_AS = "models/tank_sac_v9_2"
-ADDITIONAL_TIMESTEPS = 300_000
+LOAD_FROM = "models/tank_sac_v12"
+SAVE_AS = "models/tank_sac_v12_2"
+ADDITIONAL_TIMESTEPS = 600_000
 
 
 def make_env():
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     start = time.time()
     # tb_log_name을 명시 안 하면 SB3가 그냥 최근 "SAC_N" 폴더 번호를 이어 써서,
     # train.py가 만든 무관한 최신 버전(예: v10)의 텐서보드 로그 폴더와 섞여버림 -> 이름을 분리해서 지정
-    model.learn(total_timesteps=ADDITIONAL_TIMESTEPS, reset_num_timesteps=False, tb_log_name="v9_2")
+    model.learn(total_timesteps=ADDITIONAL_TIMESTEPS, reset_num_timesteps=False, tb_log_name="v12_2")
     # reset_num_timesteps=False
     # 이게 없으면 SB3가 텐서보드 로그의 스텝 카운트를 0부터 다시 시작해버려서,
     # 이전 학습과 이어지는 그래프가 아니라 별개의 그래프처럼 보여요.
