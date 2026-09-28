@@ -112,19 +112,20 @@ class TankEnv(gym.Env):
 
         reward = progress_reward - 0.001 * dist - 0.003   # time penalty: v11에서 0.03->0.003 (에피소드 길이 2배 늘린 만큼 누적 상한도 같이 낮춰서 "충돌이 시간초과보다 유리한" 역유인 방지)
 
-        # 2. 근접 페널티: 속도-안전 연동 (v9_2 = v10에서 완화했던 걸 v9 강도로 원복, 그 상태로 이어서 학습)
-        # v10으로 완화(0.6->0.3, 1.0->0.3)했더니 도달 성공이 오히려 사라져서, v9의 강한 세팅이 맞는 방향일 가능성 -> 원복
+        # 2. 근접 페널티: 속도-안전 연동 (v14, 라이다 30개로 더 잘 보이게 된 만큼 안전 페널티를 다시 완화)
+        # v13에서 라이다 해상도를 올리니 안전 페널티가 더 자주 발동해서 다시 과하게 느려짐(v9와 같은 패턴)
+        # -> v10 때와 동일한 비율로 완화(0.6->0.3, 1.0->0.3, 8.0->4.0). speed=0이면 v6와 동일
         speed = np.linalg.norm(self.data.qvel[0:2])
         lidar_norm = self._get_lidar()
         min_dist_m = np.min(lidar_norm) * self.lidar_max_dist
-        safety_margin = 2.0 + 0.6 * speed   # 최고속도(~11.1m/s)에서 margin ≈ 8.7m
+        safety_margin = 2.0 + 0.3 * speed   # 최고속도(~11.1m/s)에서 margin ≈ 5.3m
         if min_dist_m < safety_margin:
-            reward -= (safety_margin - min_dist_m) * 1.0
+            reward -= (safety_margin - min_dist_m) * 0.3
 
-        # 3. 충돌/도달: 충돌 페널티도 v9 강도로 원복
-        # speed=0이면 -60으로 기존과 동일, 최고속도 충돌 시 -60-8*11.1 ≈ -148.8
+        # 3. 충돌/도달: 충돌 페널티도 절반으로 완화 (v14)
+        # speed=0이면 -60으로 기존과 동일, 최고속도 충돌 시 -60-4*11.1 ≈ -104.4
         if collided:
-            reward -= 60.0 + 8.0 * speed
+            reward -= 60.0 + 4.0 * speed
         if reached:
             reward += 50.0
 
