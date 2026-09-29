@@ -118,7 +118,7 @@ if __name__ == "__main__":
     eval_env = DummyVecEnv([make_env])
     eval_callback = EvalCallback(
         eval_env,
-        best_model_save_path=f"./models/{MODEL_NAME}_best/",
+        best_model_save_path=f"./models/{MODEL_NAME}_eval_ckpt/",  # 최종 결과물(models/{MODEL_NAME}_best.zip)과 이름이 겹치지 않게 별도 폴더명 사용
         log_path=f"./tank_tensorboard/{MODEL_NAME}_eval/",
         eval_freq=max(40_000 // N_ENVS, 1),  # 4만 스텝(총 스텝 기준)마다 10에피소드 평가
         n_eval_episodes=10,
@@ -135,9 +135,9 @@ if __name__ == "__main__":
     model.save(f"models/{MODEL_NAME}")
 
     # EvalCallback이 찾은 "학습 전체 기간 중 평가 성적이 가장 좋았던" 모델을
-    # 알아보기 쉬운 이름으로 복사해둠 (models/{MODEL_NAME}_best/best_model.zip -> models/{MODEL_NAME}_best.zip)
+    # 알아보기 쉬운 이름으로 복사해둠 (models/{MODEL_NAME}_eval_ckpt/best_model.zip -> models/{MODEL_NAME}_best.zip)
     import shutil
-    best_src = f"models/{MODEL_NAME}_best/best_model.zip"
+    best_src = f"models/{MODEL_NAME}_eval_ckpt/best_model.zip"
     if os.path.exists(best_src):
         shutil.copy(best_src, f"models/{MODEL_NAME}_best.zip")
         print(f"최고 성능 체크포인트를 models/{MODEL_NAME}_best.zip 으로 저장함")
