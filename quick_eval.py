@@ -2,7 +2,7 @@ from env.tank_env import TankEnv
 from stable_baselines3 import SAC
 
 env = TankEnv(max_episode_steps=16000)
-model = SAC.load("models/tank_sac_v6")
+model = SAC.load("models/tank_sac_v15_240k_best")
 
 results = {"도달": 0, "충돌": 0, "시간초과": 0}
 for ep in range(30):
