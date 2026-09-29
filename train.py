@@ -16,7 +16,9 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 # 가장 좋았던 시점의 데이터 저장
-from stable_baselines3.common.callbacks import CheckpointCallback
+# - CheckpointCallback: 그냥 일정 스텝마다 기계적으로 저장 (좋은지 나쁜지 모르고 저장)
+# - EvalCallback: 주기적으로 "진짜 평가"를 돌려서, 지금까지 중 가장 성능 좋은 시점만 따로 저장해줌
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, CallbackList
 
 # 시간 기록용
 import time
@@ -109,11 +111,36 @@ if __name__ == "__main__":
         name_prefix=MODEL_NAME,
     )
 
+    # v15 학습 곡선을 체크포인트별로 뜯어보니 도달률이 0/20~7/20 사이를 계속 오르내렸고,
+    # 하필 마지막(120만 스텝)이 중간중간의 최고치(24만 스텝, 7/20)보다 낮았던 적도 있었음.
+    # "학습이 끝난 시점의 모델 = 가장 좋은 모델"이 전혀 보장되지 않는다는 뜻이라,
+    # 별도 평가용 env로 주기적으로 실제 평가를 돌려서 최고 기록을 자동으로 따로 저장해둠
+    eval_env = DummyVecEnv([make_env])
+    eval_callback = EvalCallback(
+        eval_env,
+        best_model_save_path=f"./models/{MODEL_NAME}_best/",
+        log_path=f"./tank_tensorboard/{MODEL_NAME}_eval/",
+        eval_freq=max(40_000 // N_ENVS, 1),  # 4만 스텝(총 스텝 기준)마다 10에피소드 평가
+        n_eval_episodes=10,
+        deterministic=True,
+        render=False,
+    )
+
+    callback = CallbackList([checkpoint_callback, eval_callback])
+
     # 환경에서 행동 -> 보상 -> 신경망 업데이트하는 과정을 총 120만번(스텝) 반복하라는 뜻
-    model.learn(total_timesteps=1_200_000, callback=checkpoint_callback)
+    model.learn(total_timesteps=1_200_000, callback=callback)
     print(f"소요 시간: {time.time() - start:.1f}초")
 
     model.save(f"models/{MODEL_NAME}")
+
+    # EvalCallback이 찾은 "학습 전체 기간 중 평가 성적이 가장 좋았던" 모델을
+    # 알아보기 쉬운 이름으로 복사해둠 (models/{MODEL_NAME}_best/best_model.zip -> models/{MODEL_NAME}_best.zip)
+    import shutil
+    best_src = f"models/{MODEL_NAME}_best/best_model.zip"
+    if os.path.exists(best_src):
+        shutil.copy(best_src, f"models/{MODEL_NAME}_best.zip")
+        print(f"최고 성능 체크포인트를 models/{MODEL_NAME}_best.zip 으로 저장함")
 
 # import datetime
 # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
