@@ -32,7 +32,7 @@ import torch
 
 # 학습이 끝나면 저장할 이름. 이거 하나만 바꾸면 체크포인트/최종 저장 경로가 다 같이 바뀜
 # (예전에 옛날 버전 이름으로 저장돼버린 실수를 막기 위함)
-MODEL_NAME = "tank_sac_v16"
+MODEL_NAME = "tank_sac_v17"
 
 
 def make_env():
@@ -68,10 +68,12 @@ if __name__ == "__main__":
         N_ENVS = max(1, N_CORES - 1)
         BATCH_SIZE = 256  # SAC 기본값
 
-    # env를 N_ENVS개 병렬로 돌리면 한 번의 벡터 스텝마다 N_ENVS배의 데이터가 쌓이므로,
-    # gradient_steps=-1로 주면 "이번에 모은 데이터만큼 업데이트 횟수도 알아서 비례해서" 처리해줌
-    # (SB3 권장 설정. 안 해주면 데이터는 N배 빨리 쌓이는데 업데이트 횟수는 그대로라 불균형해짐)
-    GRADIENT_STEPS = -1 if N_ENVS > 1 else 1
+    # v17 실험: gradient_steps를 N_ENVS에 비례시키지 않고 고정 1로 낮춤.
+    # 원래 -1은 "롤아웃 1번(=env마다 1스텝씩, 지금 N_ENVS=3이면 새 데이터 3개)당 3번 업데이트"라서
+    # 데이터 1개당 업데이트 1번 비율을 유지하던 것. 이걸 고정 1로 바꾸면 "새 데이터 3개당 업데이트 1번"이 되어
+    # 데이터 대비 업데이트 빈도가 약 1/3로 줄어듦. 이게 학습 중 성적이 크게 출렁이는(v15/v16 체크포인트 곡선)
+    # 현상을 줄이는지 확인하는 실험 - 보상/라이다/에피소드 설정은 v16 그대로 유지
+    GRADIENT_STEPS = 1
 
     print(f"[환경 감지] GPU 사용 가능: {USE_GPU} -> device={DEVICE}, "
           f"n_envs={N_ENVS} (CPU 코어 {N_CORES}개 중), "
